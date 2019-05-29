@@ -21,7 +21,7 @@ class Pipe:
         self.y = random.randrange(100, SCREEN_HEIGHT - 100)
 
 class Bird:
-    def __init__(self, y_start):
+    def __init__(self):
         self.x = SCREEN_WIDTH // 2
         self.y = SCREEN_HEIGHT // 2
         self.y_delta = 0
