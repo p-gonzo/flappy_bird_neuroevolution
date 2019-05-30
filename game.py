@@ -73,8 +73,8 @@ def main(players):
             if pipe.x > 350:
                 if closest_pipe_to_bird == None:
                     closest_pipe_to_bird = pipe
-                    print('pipe change')
             if closest_pipe_to_bird is not None:
+                # Send pipe information to birds
                 pygame.draw.rect(screen, GREEN, (closest_pipe_to_bird.x, closest_pipe_to_bird.y + 80, 50, SCREEN_HEIGHT - closest_pipe_to_bird.y ))
                 pygame.draw.rect(screen, GREEN, (closest_pipe_to_bird.x, 0, 50, closest_pipe_to_bird.y ))
                 if closest_pipe_to_bird.x < 350:
