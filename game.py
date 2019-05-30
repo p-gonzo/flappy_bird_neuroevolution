@@ -31,6 +31,7 @@ class Bird:
             self.y_delta = 5
         if self.y_delta < 15:
             self.y_delta +=6
+        
  
 def main(players):
     pygame.init()
@@ -82,12 +83,19 @@ def main(players):
             bird.y_delta += -1.3 #negative gravity
             bird.y = round(bird.y - (bird.y_delta * dt/30))
             pygame.draw.circle(screen, bird.color, [bird.x, bird.y], BIRD_SIZE)
+            
+            ## This is where NN data will live 
+            prob_of_flap = random.uniform(0, 1)
+            if prob_of_flap < 0.1:
+                bird.flap()
 
         for bird_idx, bird in enumerate(birds):
             if bird.y > SCREEN_HEIGHT:
                 del birds[bird_idx]
         if len(birds) == 0:
             done = True
+        
+
 
         pygame.display.flip()
  
