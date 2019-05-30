@@ -21,15 +21,18 @@ class Pipe:
         self.y = random.randrange(100, SCREEN_HEIGHT - 100)
 
 class Bird:
-    def __init__(self):
+    def __init__(self, y_start, color):
         self.x = SCREEN_WIDTH // 2
-        self.y = SCREEN_HEIGHT // 2
+        self.y = y_start
         self.y_delta = 0
+        self.color = color
+    def flap(self):
+        if self.y_delta < 0:
+            self.y_delta = 5
+        if self.y_delta < 15:
+            self.y_delta +=6
  
-def main():
-    """
-    This is our main program.
-    """
+def main(players):
     pygame.init()
     size = [SCREEN_WIDTH, SCREEN_HEIGHT]
     screen = pygame.display.set_mode(size)
@@ -39,7 +42,7 @@ def main():
  
     clock = pygame.time.Clock()
     pipes = []
-    player = Bird()
+    birds = players
  
     while not done:
         dt = clock.tick(30)
@@ -51,34 +54,39 @@ def main():
                 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    if player.y_delta < 0:
-                        player.y_delta = 5
-                    if player.y_delta < 15:
-                        player.y_delta +=6
+                    for bird in birds:
+                        if bird.y_delta < 0:
+                            bird.y_delta = 5
+                        if bird.y_delta < 15:
+                            bird.y_delta +=6
  
         screen.fill(BLACK)
  
-        for pipe_idx, pipe in enumerate(pipes):
+        for pipe in pipes:
             pipe.x -= (5 * dt/30)
             pygame.draw.rect(screen, WHITE, (pipe.x, 0, 50, pipe.y ))
             pygame.draw.rect(screen, WHITE, (pipe.x, pipe.y + 80, 50, SCREEN_HEIGHT - pipe.y ))
             
             if pipe.x < 350 and pipe.x + 50 > 350:
-                if player.y > pipe.y + 80:
-                    #done = True
-                    pygame.draw.rect(screen, RED, (pipe.x, pipe.y + 80, 50, SCREEN_HEIGHT - pipe.y ))
-                elif player.y < pipe.y:
-                    #done = True
-                    pygame.draw.rect(screen, RED, (pipe.x, 0, 50, pipe.y ))
+                for bird in birds:
+                    if bird.y > pipe.y + 80:
+                        #done = True
+                        pygame.draw.rect(screen, RED, (pipe.x, pipe.y + 80, 50, SCREEN_HEIGHT - pipe.y ))
+                    elif bird.y < pipe.y:
+                        #done = True
+                        pygame.draw.rect(screen, RED, (pipe.x, 0, 50, pipe.y ))
             if pipe.x < -51:
                 pipes.pop()
 
-        
-        player.y_delta += -1.3 #negative gravity
-        player.y = round(player.y - (player.y_delta * dt/30))
-        pygame.draw.circle(screen, YELLOW, [player.x, player.y], BIRD_SIZE)
+        for bird in birds:
+            bird.y_delta += -1.3 #negative gravity
+            bird.y = round(bird.y - (bird.y_delta * dt/30))
+            pygame.draw.circle(screen, bird.color, [bird.x, bird.y], BIRD_SIZE)
 
-        if player.y > SCREEN_HEIGHT:
+        for bird_idx, bird in enumerate(birds):
+            if bird.y > SCREEN_HEIGHT:
+                del birds[bird_idx]
+        if len(birds) == 0:
             done = True
 
         pygame.display.flip()
@@ -86,4 +94,11 @@ def main():
     pygame.quit()
  
 if __name__ == "__main__":
-    main()
+    birds = [
+        Bird(
+            random.randrange(100, SCREEN_HEIGHT - 100),
+            (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
+        ) 
+        for i in range(11)
+    ]
+    main(birds)
