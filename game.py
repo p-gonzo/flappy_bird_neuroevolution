@@ -86,7 +86,7 @@ def main(players):
             
             ## This is where NN data will live 
             prob_of_flap = random.uniform(0, 1)
-            if prob_of_flap < 0.1:
+            if prob_of_flap < 0.08:
                 bird.flap()
 
         for bird_idx, bird in enumerate(birds):
