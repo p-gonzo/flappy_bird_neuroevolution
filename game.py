@@ -6,6 +6,7 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
+GREEN = (0, 255, 0)
  
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 500
@@ -44,6 +45,7 @@ def main(players):
     clock = pygame.time.Clock()
     pipes = []
     birds = players
+    closest_pipe_to_bird = None
  
     while not done:
         dt = clock.tick(30)
@@ -67,7 +69,17 @@ def main(players):
             pipe.x -= (5 * dt/30)
             pygame.draw.rect(screen, WHITE, (pipe.x, 0, 50, pipe.y ))
             pygame.draw.rect(screen, WHITE, (pipe.x, pipe.y + 80, 50, SCREEN_HEIGHT - pipe.y ))
-            
+
+            if pipe.x > 350:
+                if closest_pipe_to_bird == None:
+                    closest_pipe_to_bird = pipe
+                    print('pipe change')
+            if closest_pipe_to_bird is not None:
+                pygame.draw.rect(screen, GREEN, (closest_pipe_to_bird.x, closest_pipe_to_bird.y + 80, 50, SCREEN_HEIGHT - closest_pipe_to_bird.y ))
+                pygame.draw.rect(screen, GREEN, (closest_pipe_to_bird.x, 0, 50, closest_pipe_to_bird.y ))
+                if closest_pipe_to_bird.x < 350:
+                    closest_pipe_to_bird = None
+
             if pipe.x < 350 and pipe.x + 50 > 350:
                 for bird in birds:
                     if bird.y > pipe.y + 80:
@@ -79,7 +91,7 @@ def main(players):
             if pipe.x < -51:
                 pipes.pop()
 
-        for bird in birds:
+        for bird_idx, bird in enumerate(birds):
             bird.y_delta += -1.3 #negative gravity
             bird.y = round(bird.y - (bird.y_delta * dt/30))
             pygame.draw.circle(screen, bird.color, [bird.x, bird.y], BIRD_SIZE)
@@ -89,14 +101,12 @@ def main(players):
             if prob_of_flap < 0.08:
                 bird.flap()
 
-        for bird_idx, bird in enumerate(birds):
             if bird.y > SCREEN_HEIGHT:
                 del birds[bird_idx]
+        
         if len(birds) == 0:
             done = True
         
-
-
         pygame.display.flip()
  
     pygame.quit()
