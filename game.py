@@ -145,6 +145,23 @@ def main():
        update_everything()
        draw_everything(screen)
     pygame.quit()
+
+class Game():
+    def __init__(self):
+        self.done = False
+        self.clock = pygame.time.Clock()
+        self.pipes = []
+        self.closest_pipe_to_bird = None
+        self.birds = [
+            Bird(
+                random.randrange(100, SCREEN_HEIGHT - 100),
+                (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
+            ) 
+            for i in range(11)
+        ]
+
+    
+
  
 if __name__ == "__main__":
     main()
