@@ -160,7 +160,8 @@ class Game():
             for i in range(11)
         ]
 
-    
+    def run(self):
+        
 
  
 if __name__ == "__main__":
