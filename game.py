@@ -1,12 +1,12 @@
 import pygame
 import random
 
+# Constants
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
- 
 SCREEN_WIDTH = 700
 BIRD_X = SCREEN_WIDTH // 2
 SCREEN_HEIGHT = 500
@@ -14,10 +14,11 @@ BIRD_SIZE = 10
 PIPE_WIDTH = 50
 PIPE_GAP = 80
 
+# New pipe event timer
 NEW_PIPE_EVENT = pygame.USEREVENT + 1
 pygame.time.set_timer(NEW_PIPE_EVENT, 1200)
 
- 
+# Game classes
 class Pipe:
     def __init__(self):
         self.x = SCREEN_WIDTH
@@ -27,7 +28,6 @@ class Pipe:
         self.top_color = WHITE
 
 class Bird:
-    
     def __init__(self, y_start, color):
         self.x = SCREEN_WIDTH // 2
         self.y = y_start
@@ -41,6 +41,7 @@ class Bird:
         if self.y_delta < 15:
             self.y_delta +=6
 
+# Application State
 birds = [
     Bird(
         random.randrange(100, SCREEN_HEIGHT - 100),
@@ -55,22 +56,23 @@ pipes = []
 closest_pipe_to_bird = None
 
 def draw_everything(screen):
-    
-    global pipes
-    global clock
-    global done
-    global closest_pipe_to_bird
 
     screen.fill(BLACK)
+    draw_pipes(screen)
+    draw_birds(screen)
+    pygame.display.flip()
 
+
+def draw_birds(screen):
+    for bird in birds:
+        pygame.draw.circle(screen, bird.color, [bird.x, bird.y], BIRD_SIZE)
+
+def draw_pipes(screen):
     for pipe in pipes:
         pygame.draw.rect(screen, pipe.bottom_color, (pipe.x, 0, PIPE_WIDTH, pipe.y ))
         pygame.draw.rect(screen, pipe.top_color, (pipe.x, pipe.y + PIPE_GAP, PIPE_WIDTH, SCREEN_HEIGHT - pipe.y ))
-    for bird in birds:
-        pygame.draw.circle(screen, bird.color, [bird.x, bird.y], BIRD_SIZE)
-    pygame.display.flip()
 
-def update_everything(screen):
+def update_everything():
     
     global pipes
     global clock
@@ -140,7 +142,7 @@ def main():
     screen = pygame.display.set_mode(size)
  
     while not done:
-       update_everything(screen)
+       update_everything()
        draw_everything(screen)
     pygame.quit()
  
