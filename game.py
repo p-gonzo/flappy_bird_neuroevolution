@@ -23,7 +23,6 @@ class Pipe:
     def __init__(self):
         self.x = SCREEN_WIDTH
         self.y = random.randrange(100, SCREEN_HEIGHT - 100)
-        self.color = WHITE
         self.bottom_color = WHITE
         self.top_color = WHITE
 
@@ -40,6 +39,19 @@ class Bird:
             self.y_delta = 5
         if self.y_delta < 15:
             self.y_delta +=6
+    
+    def will_flap(self):
+        if self.pipe is not None:
+            x_delta, y_delta = self.look_at_oncoming_pipe()
+        # TODO - Replace with N.N.
+        prob_of_flap = random.uniform(0, 1)
+        return prob_of_flap < 0.08
+
+    def look_at_oncoming_pipe(self):
+        horizontal_distance_to_pipe = self.pipe.x - self.x
+        vertical_distance_to_pipe = self.pipe.y - self.y
+        return (horizontal_distance_to_pipe, vertical_distance_to_pipe)
+
 
 
 class Game():
@@ -60,66 +72,75 @@ class Game():
  
         while not self.done:
             self.dt = self.clock.tick(30)
+            self.handle_event_queue()
             self.update_everything()
             self.draw_everything()
+
+            if len(self.birds) == 0:
+                self.done = True
         pygame.quit()
 
-    def update_everything(self):
+    def handle_event_queue(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.done = True
             elif event.type == NEW_PIPE_EVENT:
                     self.pipes = [Pipe()] + self.pipes
-                
             elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    self.done = True
                 if event.key == pygame.K_SPACE:
                     for bird in self.birds:
-                        if bird.y_delta < 0:
-                            bird.y_delta = 5
-                        if bird.y_delta < 15:
-                            bird.y_delta +=6
+                        bird.flap()
 
+    def update_everything(self):
         for pipe in self.pipes:
-            pipe.x -= (5 * self.dt/30)
-            pipe.bottom_color = WHITE
-            pipe.top_color = WHITE
-
-            if pipe.x > BIRD_X:
-                if self.closest_pipe_to_bird == None:
-                    self.closest_pipe_to_bird = pipe
-            if self.closest_pipe_to_bird is not None:
-                # Send pipe information to birds
-                self.closest_pipe_to_bird.bottom_color = GREEN
-                self.closest_pipe_to_bird.top_color = GREEN
-                if self.closest_pipe_to_bird.x < BIRD_X:
-                    self.closest_pipe_to_bird = None
-
-            if pipe.x < BIRD_X and pipe.x + PIPE_WIDTH > BIRD_X:
-                for bird in self.birds:
-                    if bird.y > pipe.y + PIPE_GAP:
-                        #done = True
-                        pipe.top_color = RED
-                    elif bird.y < pipe.y:
-                        #done = True
-                        pipe.bottom_color = RED
+            self.move_pipe_forward(pipe)
+            self.set_closest_pipe_to_bird(pipe)
+            self.handle_pipe_bird_collistion(pipe)
 
         for bird_idx, bird in enumerate(self.birds):
-            bird.y_delta += -1.3 #negative gravity
-            bird.y = round(bird.y - (bird.y_delta * self.dt/30))
-            bird.pipe = self.closest_pipe_to_bird
-
-            
-            ## This is where NN data will live 
-            prob_of_flap = random.uniform(0, 1)
-            if prob_of_flap < 0.08:
+            self.move_bird(bird)
+            self.kill_bird_that_falls_down(bird, bird_idx)
+            if self.closest_pipe_to_bird is not None:
+                bird.pipe = self.closest_pipe_to_bird
+            if bird.will_flap():
                 bird.flap()
-
-            if bird.y > SCREEN_HEIGHT:
-                del self.birds[bird_idx]
         
-        if len(self.birds) == 0:
-            self.done = True
+
+    def move_pipe_forward(self, pipe):
+        pipe.x -= (5 * self.dt/30)
+        pipe.bottom_color = WHITE
+        pipe.top_color = WHITE
     
+    def set_closest_pipe_to_bird(self, pipe):
+        if pipe.x > BIRD_X:
+            if self.closest_pipe_to_bird == None:
+                self.closest_pipe_to_bird = pipe
+        if self.closest_pipe_to_bird is not None:
+            self.closest_pipe_to_bird.bottom_color = GREEN
+            self.closest_pipe_to_bird.top_color = GREEN
+            if self.closest_pipe_to_bird.x < BIRD_X:
+                self.closest_pipe_to_bird = None
+
+    def handle_pipe_bird_collistion(self, pipe):
+        if pipe.x < BIRD_X and pipe.x + PIPE_WIDTH > BIRD_X:
+            for bird_idx, bird in enumerate(self.birds):
+                if bird.y > pipe.y + PIPE_GAP:
+                    # del self.birds[bird_idx]
+                    pipe.top_color = RED
+                elif bird.y < pipe.y:
+                    # del self.birds[bird_idx]
+                    pipe.bottom_color = RED
+
+    def move_bird(self, bird):
+        bird.y_delta += -1.3 #negative gravity
+        bird.y = round(bird.y - (bird.y_delta * self.dt/30))
+
+    def kill_bird_that_falls_down(self, bird, bird_idx):
+        if bird.y > SCREEN_HEIGHT:
+            del self.birds[bird_idx]
+
     def draw_everything(self):
         self.screen.fill(BLACK)
         self.draw_pipes()
@@ -143,7 +164,7 @@ if __name__ == "__main__":
             random.randrange(100, SCREEN_HEIGHT - 100),
             (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
         ) 
-        for i in range(11)
+        for i in range(10)
     ]
     game = Game(birds)
     game.run()
