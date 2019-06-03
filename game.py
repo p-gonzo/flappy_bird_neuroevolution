@@ -1,5 +1,8 @@
 import pygame
 import random
+import numpy as np
+from copy import deepcopy
+from nn import NeuralNetwork
 
 # Constants
 BLACK = (0, 0, 0)
@@ -27,12 +30,15 @@ class Pipe:
         self.top_color = WHITE
 
 class Bird:
-    def __init__(self, y_start, color):
+    def __init__(self, y_start, color, brain_model = None):
         self.x = SCREEN_WIDTH // 2
         self.y = y_start
         self.y_delta = 0
         self.color = color
         self.pipe = None
+        #shape of our brain
+        self.brain = NeuralNetwork(3, 8, 2, model=brain_model)
+        self.fitness = 0
     
     def flap(self):
         if self.y_delta < 0:
@@ -43,12 +49,10 @@ class Bird:
     def will_flap(self):
         if self.pipe is not None:
             x_delta, y_delta = self.look_at_oncoming_pipe()
-        # TODO - Replace with N.N.
-        prob_of_flap = random.uniform(0, 1)
-        return prob_of_flap < 0.08
+            return(self.brain.predict([x_delta, y_delta, self.y_delta]))
 
     def look_at_oncoming_pipe(self):
-        horizontal_distance_to_pipe = self.pipe.x - self.x
+        horizontal_distance_to_pipe = self.pipe.x + PIPE_WIDTH - self.x
         vertical_distance_to_pipe = self.pipe.y - self.y
         return (horizontal_distance_to_pipe, vertical_distance_to_pipe)
 
@@ -76,8 +80,10 @@ class Game():
             self.update_everything()
             self.draw_everything()
 
-            if len(self.birds) == 0:
-                self.done = True
+            # if len(self.birds) == 0:
+            #     self.done = True
+            if len(self.birds) == 1:
+                self.create_new_generation(self.birds[0])
         pygame.quit()
 
     def handle_event_queue(self):
@@ -100,6 +106,7 @@ class Game():
             self.handle_pipe_bird_collistion(pipe)
 
         for bird_idx, bird in enumerate(self.birds):
+            bird.fitness +=1
             self.move_bird(bird)
             self.kill_bird_that_falls_down(bird, bird_idx)
             if self.closest_pipe_to_bird is not None:
@@ -127,10 +134,10 @@ class Game():
         if pipe.x < BIRD_X and pipe.x + PIPE_WIDTH > BIRD_X:
             for bird_idx, bird in enumerate(self.birds):
                 if bird.y > pipe.y + PIPE_GAP:
-                    # del self.birds[bird_idx]
+                    del self.birds[bird_idx]
                     pipe.top_color = RED
                 elif bird.y < pipe.y:
-                    # del self.birds[bird_idx]
+                    del self.birds[bird_idx]
                     pipe.bottom_color = RED
 
     def move_bird(self, bird):
@@ -138,8 +145,9 @@ class Game():
         bird.y = round(bird.y - (bird.y_delta * self.dt/30))
 
     def kill_bird_that_falls_down(self, bird, bird_idx):
-        if bird.y > SCREEN_HEIGHT:
+        if bird.y > SCREEN_HEIGHT or bird.y < -100:
             del self.birds[bird_idx]
+
 
     def draw_everything(self):
         self.screen.fill(BLACK)
@@ -156,6 +164,19 @@ class Game():
             pygame.draw.rect(self.screen, pipe.bottom_color, (pipe.x, 0, PIPE_WIDTH, pipe.y ))
             pygame.draw.rect(self.screen, pipe.top_color, (pipe.x, pipe.y + PIPE_GAP, PIPE_WIDTH, SCREEN_HEIGHT - pipe.y ))
 
+    def create_new_generation(self, bird):
+        fit_brain = bird.brain.model
+        for i in range(9):
+            new_bird = Bird(
+                random.randrange(100, SCREEN_HEIGHT - 100),
+                (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255)),
+                brain_model=fit_brain
+            )
+            new_bird.y_delta = 0
+            self.birds.append(new_bird)
+            self.closest_pipe_to_bird = None
+            self.pipes = []
+            print(new_bird.brain.model.get_weights())
 
  
 if __name__ == "__main__":
