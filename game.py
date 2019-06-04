@@ -3,6 +3,8 @@ import random
 import numpy as np
 from copy import deepcopy
 from nn import NeuralNetwork
+import tensorflow as tf
+
 
 # Constants
 BLACK = (0, 0, 0)
@@ -14,12 +16,19 @@ SCREEN_WIDTH = 700
 BIRD_X = SCREEN_WIDTH // 2
 SCREEN_HEIGHT = 500
 BIRD_SIZE = 10
-PIPE_WIDTH = 50
-PIPE_GAP = 80
+PIPE_WIDTH = 25
+PIPE_GAP = 100
 
 # New pipe event timer
 NEW_PIPE_EVENT = pygame.USEREVENT + 1
-pygame.time.set_timer(NEW_PIPE_EVENT, 1200)
+pygame.time.set_timer(NEW_PIPE_EVENT, 1400)
+
+#Helper func
+def translate(value, leftMin, leftMax, rightMin, rightMax):
+    leftSpan = leftMax - leftMin
+    rightSpan = rightMax - rightMin
+    valueScaled = float(value - leftMin) / float(leftSpan)
+    return rightMin + (valueScaled * rightSpan)
 
 # Game classes
 class Pipe:
@@ -37,7 +46,7 @@ class Bird:
         self.color = color
         self.pipe = None
         #shape of our brain
-        self.brain = NeuralNetwork(3, 8, 2, model=brain_model)
+        self.brain = NeuralNetwork(3, 8, 2, parent_weights=brain_model)
         self.fitness = 0
     
     def flap(self):
@@ -49,7 +58,11 @@ class Bird:
     def will_flap(self):
         if self.pipe is not None:
             x_delta, y_delta = self.look_at_oncoming_pipe()
-            return(self.brain.predict([x_delta, y_delta, self.y_delta]))
+            self_delta = translate(self.y_delta, -21, 21, -1, 1)
+            x_delta = translate(x_delta, 0, 388, -1, 1)
+            y_delta = translate(y_delta, 0, 470, -1, 1)
+            #print(x_delta, y_delta, self_delta)
+            return(self.brain.predict([x_delta, y_delta, self_delta]))
 
     def look_at_oncoming_pipe(self):
         horizontal_distance_to_pipe = self.pipe.x + PIPE_WIDTH - self.x
@@ -68,6 +81,8 @@ class Game():
         self.size = [SCREEN_WIDTH, SCREEN_HEIGHT]
         self.screen = None
         self.dt = 0
+        self.fitest_brain_so_far = None
+        self.highest_fitness_so_far = 0
 
     def run(self):
         pygame.init()
@@ -80,10 +95,14 @@ class Game():
             self.update_everything()
             self.draw_everything()
 
-            # if len(self.birds) == 0:
-            #     self.done = True
+            if len(self.birds) == 0:
+                self.create_new_generation(self.fitest_brain_so_far)
+                self.pipes = []
             if len(self.birds) == 1:
-                self.create_new_generation(self.birds[0])
+                fit_bird = self.birds[0]
+                if self.fitest_brain_so_far is None or fit_bird.fitness > self.highest_fitness_so_far:
+                    self.fitest_brain_so_far = fit_bird.brain.model.get_weights()
+                    self.highest_fitness_so_far = fit_bird.fitness
         pygame.quit()
 
     def handle_event_queue(self):
@@ -119,6 +138,8 @@ class Game():
         pipe.x -= (5 * self.dt/30)
         pipe.bottom_color = WHITE
         pipe.top_color = WHITE
+        if pipe.x < -50:
+            self.pipes.pop()
     
     def set_closest_pipe_to_bird(self, pipe):
         if pipe.x > BIRD_X:
@@ -164,28 +185,27 @@ class Game():
             pygame.draw.rect(self.screen, pipe.bottom_color, (pipe.x, 0, PIPE_WIDTH, pipe.y ))
             pygame.draw.rect(self.screen, pipe.top_color, (pipe.x, pipe.y + PIPE_GAP, PIPE_WIDTH, SCREEN_HEIGHT - pipe.y ))
 
-    def create_new_generation(self, bird):
-        fit_brain = bird.brain.model
-        for i in range(9):
+    def create_new_generation(self, fit_brain):
+        tf.keras.backend.clear_session()
+        for i in range(20):
             new_bird = Bird(
-                random.randrange(100, SCREEN_HEIGHT - 100),
+                SCREEN_HEIGHT // 2,
                 (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255)),
                 brain_model=fit_brain
             )
             new_bird.y_delta = 0
+            new_bird.fitness = 0
             self.birds.append(new_bird)
             self.closest_pipe_to_bird = None
-            self.pipes = []
-            print(new_bird.brain.model.get_weights())
 
  
 if __name__ == "__main__":
     birds = [
         Bird(
-            random.randrange(100, SCREEN_HEIGHT - 100),
+            SCREEN_HEIGHT // 2,
             (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
         ) 
-        for i in range(10)
+        for i in range(20)
     ]
     game = Game(birds)
     game.run()
