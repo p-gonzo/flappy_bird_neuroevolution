@@ -67,7 +67,6 @@ class Bird:
             self_delta = translate(self.y_delta, -21, 21, -1, 1)
             x_delta = translate(x_delta, 0, 388, -1, 1)
             y_delta = translate(y_delta, 0, 470, -1, 1)
-            #print(x_delta, y_delta, self_delta)
             return(self.brain.predict([x_delta, y_delta, self_delta]))
 
     def look_at_oncoming_pipe(self):
@@ -85,6 +84,7 @@ class Game():
 
 
         self.done = False
+        self.created_new_generation = False
         self.clock = pygame.time.Clock()
         self.pipes = []
         self.closest_pipe_to_bird = None
@@ -103,8 +103,9 @@ class Game():
     def run(self):
  
         while not self.done:
-            
             self.dt = self.clock.tick(30)
+            if self.created_new_generation:
+                self.refresh_game_after_new_generation()
             self.handle_event_queue()
             self.update_everything()
             self.draw_everything()
@@ -112,6 +113,7 @@ class Game():
             if len(self.birds) == 1:
                 self.capture_last_bird_remaining(self.birds[0])
             if len(self.birds) == 0:
+                self.display_loading_screen()
                 self.create_new_generation(self.fitest_brain_so_far)
             
         pygame.quit()
@@ -179,7 +181,7 @@ class Game():
         bird.y = round(bird.y - (bird.y_delta * self.dt/30))
 
     def kill_bird_that_flies_out_of_bounds(self, bird, bird_idx):
-        if bird.y > GAME_SCREEN_HEIGHT or bird.y < -100:
+        if bird.y + 25 > GAME_SCREEN_HEIGHT or bird.y < -100:
             del self.birds[bird_idx]
 
     def capture_last_bird_remaining(self, fit_bird):
@@ -228,10 +230,32 @@ class Game():
             new_bird.y_delta = 0
             new_bird.fitness = 0
             self.birds.append(new_bird)
-        self.closest_pipe_to_bird = None
+        self.created_new_generation = True
+
+    def refresh_game_after_new_generation(self):
+        self.created_new_generation = False
+        self.dt = 1
+        pygame.event.clear()
+        pygame.time.set_timer(NEW_PIPE_EVENT, 0)
+        pygame.time.set_timer(NEW_PIPE_EVENT, 1400)
+        pygame.event.post(pygame.event.Event(NEW_PIPE_EVENT))
         self.pipes = []
+        self.closest_pipe_to_bird = None
         self.current_score = 0
         self.current_generation += 1
+
+    def display_loading_screen(self):
+        self.dt = self.clock.tick(30)
+        self.screen.fill(SKY_BLUE)
+        self.draw_menu()
+        loading_text = self.main_font.render(f'Spawing Generation {self.current_generation + 1}', False, YELLOW)
+        text_rect = loading_text.get_rect()
+        text_rect.center = (GAME_SCREEN_WIDTH // 2, GAME_SCREEN_HEIGHT // 2 )
+        self.screen.blit(loading_text, text_rect)
+        #Need to check for events to get screen to update
+        pygame.display.flip()
+        for event in pygame.event.get():
+            pass
 
 
  
