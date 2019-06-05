@@ -11,13 +11,19 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-SCREEN_WIDTH = 700
-BIRD_X = SCREEN_WIDTH // 2
-SCREEN_HEIGHT = 500
+DARK_GREEN = (0, 100, 0)
+ACTIVE_GREEN = (0, 200, 0)
+SKY_BLUE = (135, 206, 235)
+
+GAME_SCREEN_WIDTH = 700
+GAME_SCREEN_HEIGHT = 500
 BIRD_SIZE = 10
 PIPE_WIDTH = 25
 PIPE_GAP = 100
+BIRD_X = GAME_SCREEN_WIDTH // 2
+GAME_MENU_WIDTH = 300
+SCREEN_WIDTH = GAME_SCREEN_WIDTH + GAME_MENU_WIDTH
+FONT_SIZE = 30
 
 # New pipe event timer
 NEW_PIPE_EVENT = pygame.USEREVENT + 1
@@ -33,14 +39,14 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
 # Game classes
 class Pipe:
     def __init__(self):
-        self.x = SCREEN_WIDTH
-        self.y = random.randrange(100, SCREEN_HEIGHT - 100)
-        self.bottom_color = WHITE
-        self.top_color = WHITE
+        self.x = GAME_SCREEN_WIDTH
+        self.y = random.randrange(100, GAME_SCREEN_HEIGHT - 100)
+        self.bottom_color = DARK_GREEN
+        self.top_color = DARK_GREEN
 
 class Bird:
     def __init__(self, y_start, color, brain_model = None):
-        self.x = SCREEN_WIDTH // 2
+        self.x = GAME_SCREEN_WIDTH // 2
         self.y = y_start
         self.y_delta = 0
         self.color = color
@@ -75,7 +81,7 @@ class Game():
     def __init__(self, birds):
         pygame.init()
         pygame.font.init()
-        pygame.display.set_caption("Flappy Bird")
+        pygame.display.set_caption("Flappy Bird: NeuroEvolution")
 
 
         self.done = False
@@ -83,13 +89,14 @@ class Game():
         self.pipes = []
         self.closest_pipe_to_bird = None
         self.birds = birds
-        self.size = [SCREEN_WIDTH, SCREEN_HEIGHT]
+        self.size = [SCREEN_WIDTH, GAME_SCREEN_HEIGHT]
         self.screen = pygame.display.set_mode(self.size)
         self.dt = 0
         self.fitest_brain_so_far = None
         self.highest_fitness_so_far = 0
         self.current_generation = 1
-        self.main_font = pygame.font.SysFont('Comic Sans MS', 30)
+
+        self.main_font = pygame.font.Font(None, FONT_SIZE)
 
     def run(self):
  
@@ -130,7 +137,7 @@ class Game():
         for bird_idx, bird in enumerate(self.birds):
             bird.fitness +=1
             self.move_bird(bird)
-            self.kill_bird_that_falls_down(bird, bird_idx)
+            self.kill_bird_that_flies_out_of_bounds(bird, bird_idx)
             if self.closest_pipe_to_bird is not None:
                 bird.pipe = self.closest_pipe_to_bird
             if bird.will_flap():
@@ -140,8 +147,8 @@ class Game():
 
     def move_pipe_forward(self, pipe):
         pipe.x -= (5 * self.dt/30)
-        pipe.bottom_color = WHITE
-        pipe.top_color = WHITE
+        pipe.bottom_color = DARK_GREEN
+        pipe.top_color = DARK_GREEN
         if pipe.x < -50:
             self.pipes.pop()
     
@@ -150,8 +157,8 @@ class Game():
             if self.closest_pipe_to_bird == None:
                 self.closest_pipe_to_bird = pipe
         if self.closest_pipe_to_bird is not None:
-            self.closest_pipe_to_bird.bottom_color = GREEN
-            self.closest_pipe_to_bird.top_color = GREEN
+            self.closest_pipe_to_bird.bottom_color = ACTIVE_GREEN
+            self.closest_pipe_to_bird.top_color = ACTIVE_GREEN
             if self.closest_pipe_to_bird.x < BIRD_X:
                 self.closest_pipe_to_bird = None
 
@@ -169,16 +176,16 @@ class Game():
         bird.y_delta += -1.3 #negative gravity
         bird.y = round(bird.y - (bird.y_delta * self.dt/30))
 
-    def kill_bird_that_falls_down(self, bird, bird_idx):
-        if bird.y > SCREEN_HEIGHT or bird.y < -100:
+    def kill_bird_that_flies_out_of_bounds(self, bird, bird_idx):
+        if bird.y > GAME_SCREEN_HEIGHT or bird.y < -100:
             del self.birds[bird_idx]
 
 
     def draw_everything(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(SKY_BLUE)
         self.draw_pipes()
         self.draw_birds()
-        self.screen.blit(self.textsurface,(0,0))
+        self.draw_menu()
         pygame.display.flip()
 
     def draw_birds(self):
@@ -188,13 +195,19 @@ class Game():
     def draw_pipes(self):
         for pipe in self.pipes:
             pygame.draw.rect(self.screen, pipe.bottom_color, (pipe.x, 0, PIPE_WIDTH, pipe.y ))
-            pygame.draw.rect(self.screen, pipe.top_color, (pipe.x, pipe.y + PIPE_GAP, PIPE_WIDTH, SCREEN_HEIGHT - pipe.y ))
+            pygame.draw.rect(self.screen, pipe.top_color, (pipe.x, pipe.y + PIPE_GAP, PIPE_WIDTH, GAME_SCREEN_HEIGHT - pipe.y ))
+
+    def draw_menu(self):
+        pygame.draw.rect(self.screen, BLACK, (GAME_SCREEN_WIDTH, 0, GAME_MENU_WIDTH, GAME_SCREEN_HEIGHT))
+        text_rect = self.textsurface.get_rect()
+        text_rect.center = ((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2, 0 + FONT_SIZE // 2 )
+        self.screen.blit(self.textsurface, text_rect)
 
     def create_new_generation(self, fit_brain):
         tf.keras.backend.clear_session()
         for i in range(20):
             new_bird = Bird(
-                SCREEN_HEIGHT // 2,
+                GAME_SCREEN_HEIGHT // 2,
                 (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255)),
                 brain_model=fit_brain
             )
@@ -210,7 +223,7 @@ class Game():
 if __name__ == "__main__":
     birds = [
         Bird(
-            SCREEN_HEIGHT // 2,
+            GAME_SCREEN_HEIGHT // 2,
             (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
         ) 
         for i in range(20)
