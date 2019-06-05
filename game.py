@@ -95,24 +95,25 @@ class Game():
         self.fitest_brain_so_far = None
         self.highest_fitness_so_far = 0
         self.current_generation = 1
+        self.current_score = 0
 
         self.main_font = pygame.font.Font(None, FONT_SIZE)
+        self.large_font = pygame.font.Font(None, FONT_SIZE * 2)
 
     def run(self):
  
         while not self.done:
+            
             self.dt = self.clock.tick(30)
             self.handle_event_queue()
             self.update_everything()
             self.draw_everything()
-
+            
+            if len(self.birds) == 1:
+                self.capture_last_bird_remaining(self.birds[0])
             if len(self.birds) == 0:
                 self.create_new_generation(self.fitest_brain_so_far)
-            if len(self.birds) == 1:
-                fit_bird = self.birds[0]
-                if self.fitest_brain_so_far is None or fit_bird.fitness > self.highest_fitness_so_far:
-                    self.fitest_brain_so_far = fit_bird.brain.model.get_weights()
-                    self.highest_fitness_so_far = fit_bird.fitness
+            
         pygame.quit()
 
     def handle_event_queue(self):
@@ -143,7 +144,7 @@ class Game():
             if bird.will_flap():
                 bird.flap()
         
-        self.textsurface = self.main_font.render(f'Current Gen: {self.current_generation}', False, WHITE)
+        self.update_text_values()
 
     def move_pipe_forward(self, pipe):
         pipe.x -= (5 * self.dt/30)
@@ -160,6 +161,7 @@ class Game():
             self.closest_pipe_to_bird.bottom_color = ACTIVE_GREEN
             self.closest_pipe_to_bird.top_color = ACTIVE_GREEN
             if self.closest_pipe_to_bird.x < BIRD_X:
+                self.current_score += 1
                 self.closest_pipe_to_bird = None
 
     def handle_pipe_bird_collistion(self, pipe):
@@ -180,6 +182,14 @@ class Game():
         if bird.y > GAME_SCREEN_HEIGHT or bird.y < -100:
             del self.birds[bird_idx]
 
+    def capture_last_bird_remaining(self, fit_bird):
+        if self.fitest_brain_so_far is None or fit_bird.fitness > self.highest_fitness_so_far:
+            self.fitest_brain_so_far = fit_bird.brain.model.get_weights()
+            self.highest_fitness_so_far = fit_bird.fitness
+
+    def update_text_values(self):
+        self.generation_text = self.main_font.render(f'Generation : {self.current_generation}', False, WHITE)
+        self.current_score_text = self.large_font.render(f'{self.current_score}', False, YELLOW)
 
     def draw_everything(self):
         self.screen.fill(SKY_BLUE)
@@ -196,12 +206,16 @@ class Game():
         for pipe in self.pipes:
             pygame.draw.rect(self.screen, pipe.bottom_color, (pipe.x, 0, PIPE_WIDTH, pipe.y ))
             pygame.draw.rect(self.screen, pipe.top_color, (pipe.x, pipe.y + PIPE_GAP, PIPE_WIDTH, GAME_SCREEN_HEIGHT - pipe.y ))
+        
+        text_rect = self.current_score_text.get_rect()
+        text_rect.center = (GAME_SCREEN_WIDTH - FONT_SIZE * 2 , 0 + FONT_SIZE * 2 // 2 )
+        self.screen.blit(self.current_score_text, text_rect)
 
     def draw_menu(self):
         pygame.draw.rect(self.screen, BLACK, (GAME_SCREEN_WIDTH, 0, GAME_MENU_WIDTH, GAME_SCREEN_HEIGHT))
-        text_rect = self.textsurface.get_rect()
+        text_rect = self.generation_text.get_rect()
         text_rect.center = ((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2, 0 + FONT_SIZE // 2 )
-        self.screen.blit(self.textsurface, text_rect)
+        self.screen.blit(self.generation_text, text_rect)
 
     def create_new_generation(self, fit_brain):
         tf.keras.backend.clear_session()
@@ -216,6 +230,7 @@ class Game():
             self.birds.append(new_bird)
         self.closest_pipe_to_bird = None
         self.pipes = []
+        self.current_score = 0
         self.current_generation += 1
 
 
