@@ -73,21 +73,25 @@ class Bird:
 
 class Game():
     def __init__(self, birds):
+        pygame.init()
+        pygame.font.init()
+        pygame.display.set_caption("Flappy Bird")
+
+
         self.done = False
         self.clock = pygame.time.Clock()
         self.pipes = []
         self.closest_pipe_to_bird = None
         self.birds = birds
         self.size = [SCREEN_WIDTH, SCREEN_HEIGHT]
-        self.screen = None
+        self.screen = pygame.display.set_mode(self.size)
         self.dt = 0
         self.fitest_brain_so_far = None
         self.highest_fitness_so_far = 0
+        self.current_generation = 1
+        self.main_font = pygame.font.SysFont('Comic Sans MS', 30)
 
     def run(self):
-        pygame.init()
-        pygame.display.set_caption("Flappy Bird")
-        self.screen = pygame.display.set_mode(self.size)
  
         while not self.done:
             self.dt = self.clock.tick(30)
@@ -97,7 +101,6 @@ class Game():
 
             if len(self.birds) == 0:
                 self.create_new_generation(self.fitest_brain_so_far)
-                self.pipes = []
             if len(self.birds) == 1:
                 fit_bird = self.birds[0]
                 if self.fitest_brain_so_far is None or fit_bird.fitness > self.highest_fitness_so_far:
@@ -133,6 +136,7 @@ class Game():
             if bird.will_flap():
                 bird.flap()
         
+        self.textsurface = self.main_font.render(f'Current Gen: {self.current_generation}', False, WHITE)
 
     def move_pipe_forward(self, pipe):
         pipe.x -= (5 * self.dt/30)
@@ -174,6 +178,7 @@ class Game():
         self.screen.fill(BLACK)
         self.draw_pipes()
         self.draw_birds()
+        self.screen.blit(self.textsurface,(0,0))
         pygame.display.flip()
 
     def draw_birds(self):
@@ -196,7 +201,10 @@ class Game():
             new_bird.y_delta = 0
             new_bird.fitness = 0
             self.birds.append(new_bird)
-            self.closest_pipe_to_bird = None
+        self.closest_pipe_to_bird = None
+        self.pipes = []
+        self.current_generation += 1
+
 
  
 if __name__ == "__main__":
