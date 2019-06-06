@@ -92,10 +92,16 @@ class Game():
         self.size = [SCREEN_WIDTH, GAME_SCREEN_HEIGHT]
         self.screen = pygame.display.set_mode(self.size)
         self.dt = 0
-        self.fitest_brain_so_far = None
-        self.highest_fitness_so_far = 0
+        self.fitest_brain_in_current_generation = None
         self.current_generation = 1
         self.current_score = 0
+        self.fitest_bird_so_far = {
+            'brain': None,
+            'fitness': 0,
+            'generation': 0,
+            'color': None,
+            'score': 0
+        }
 
         self.main_font = pygame.font.Font(None, FONT_SIZE)
         self.large_font = pygame.font.Font(None, FONT_SIZE * 2)
@@ -114,7 +120,7 @@ class Game():
                 self.capture_last_bird_remaining(self.birds[0])
             if len(self.birds) == 0:
                 self.display_loading_screen()
-                self.create_new_generation(self.fitest_brain_so_far)
+                self.create_new_generation()
             
         pygame.quit()
 
@@ -185,13 +191,20 @@ class Game():
             del self.birds[bird_idx]
 
     def capture_last_bird_remaining(self, fit_bird):
-        if self.fitest_brain_so_far is None or fit_bird.fitness > self.highest_fitness_so_far:
-            self.fitest_brain_so_far = fit_bird.brain.model.get_weights()
-            self.highest_fitness_so_far = fit_bird.fitness
+        fitest_brain_in_current_generation = fit_bird.brain.model.get_weights()
+        if self.fitest_bird_so_far['brain'] is None or fit_bird.fitness > self.fitest_bird_so_far['fitness']:
+            self.fitest_bird_so_far['brain'] = fit_bird.brain.model.get_weights()
+            self.fitest_bird_so_far['fitness'] = fit_bird.fitness
+            self.fitest_bird_so_far['score'] = self.current_score
+            self.fitest_bird_so_far['generation'] = self.current_generation
+            self.fitest_bird_so_far['color'] = fit_bird.color
 
     def update_text_values(self):
         self.generation_text = self.main_font.render(f'Generation : {self.current_generation}', False, WHITE)
         self.current_score_text = self.large_font.render(f'{self.current_score}', False, YELLOW)
+        self.fitest_bird_text_1 = self.main_font.render(f'Fittest Bird So Far:', False, WHITE)
+        self.fitest_bird_text_2 = self.main_font.render(f"Score: {self.fitest_bird_so_far['score']}", False, YELLOW)
+        self.fitest_bird_text_3 = self.main_font.render(f"Gen: {self.fitest_bird_so_far['generation']}", False, WHITE)
 
     def draw_everything(self):
         self.screen.fill(SKY_BLUE)
@@ -219,16 +232,31 @@ class Game():
         text_rect.center = ((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2, 0 + FONT_SIZE // 2 )
         self.screen.blit(self.generation_text, text_rect)
 
-    def create_new_generation(self, fit_brain):
+        if self.fitest_bird_so_far['brain'] is not None:
+            fitest_bird_text_1 = self.fitest_bird_text_1.get_rect()
+            fitest_bird_text_1.center = ((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2, 50 + FONT_SIZE // 2 )
+            self.screen.blit(self.fitest_bird_text_1, fitest_bird_text_1)
+            pygame.draw.circle(self.screen, self.fitest_bird_so_far['color'], [GAME_SCREEN_WIDTH + 50, 118], BIRD_SIZE)
+
+            fitest_bird_text_2 = self.fitest_bird_text_2.get_rect()
+            fitest_bird_text_2.center = (((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2) - 25, 88 + FONT_SIZE // 2 )
+            self.screen.blit(self.fitest_bird_text_2, fitest_bird_text_2)
+
+            fitest_bird_text_3 = self.fitest_bird_text_3.get_rect()
+            fitest_bird_text_3.center = (((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2) - 33, 88 + FONT_SIZE + 10 )
+            self.screen.blit(self.fitest_bird_text_3, fitest_bird_text_3)
+
+
+    def create_new_generation(self):
         tf.keras.backend.clear_session()
         for i in range(20):
             new_bird = Bird(
                 GAME_SCREEN_HEIGHT // 2,
                 (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255)),
-                brain_model=fit_brain
+                # Half of new birds are mutated from the fittest bird ever
+                # Other half are mutated from the fittest bird in last generation
+                brain_model= self.fitest_bird_so_far['brain'] if i % 2 == 0 else self.fitest_brain_in_current_generation
             )
-            new_bird.y_delta = 0
-            new_bird.fitness = 0
             self.birds.append(new_bird)
         self.created_new_generation = True
 

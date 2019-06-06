@@ -15,7 +15,6 @@ class NeuralNetwork():
     def predict(self, inputs):
         xs = np.array([inputs])
         y_pred = self.model.predict(xs)[0]
-        # print(y_pred)
         return y_pred[0] > y_pred[1]
     
     def mutate(self, rate):
@@ -27,7 +26,7 @@ class NeuralNetwork():
                     recursively_mutate(item)
                 else:
                     if np.random.random() < rate:
-                        obj[item_idx] = item + (np.random.normal() * 0.5)
+                        obj[item_idx] = item + (np.random.normal() * np.random.uniform(low=0.3, high=0.6))
         recursively_mutate(mutated_weights)
         self.model.set_weights(mutated_weights)
             
