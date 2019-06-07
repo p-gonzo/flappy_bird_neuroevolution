@@ -1,82 +1,17 @@
-import pygame
 import random
-import numpy as np
 from copy import deepcopy
-from nn import NeuralNetwork
+
+import pygame
+import numpy as np
 import tensorflow as tf
 
-
-# Constants
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-YELLOW = (255, 255, 0)
-RED = (255, 0, 0)
-DARK_GREEN = (0, 100, 0)
-ACTIVE_GREEN = (0, 200, 0)
-SKY_BLUE = (135, 206, 235)
-
-GAME_SCREEN_WIDTH = 700
-GAME_SCREEN_HEIGHT = 500
-BIRD_SIZE = 10
-PIPE_WIDTH = 35
-PIPE_GAP = 100
-BIRD_X = GAME_SCREEN_WIDTH // 2
-GAME_MENU_WIDTH = 300
-SCREEN_WIDTH = GAME_SCREEN_WIDTH + GAME_MENU_WIDTH
-FONT_SIZE = 30
+from bird import Bird
+from pipe import Pipe
+from constants import *
 
 # New pipe event timer
 NEW_PIPE_EVENT = pygame.USEREVENT + 1
 pygame.time.set_timer(NEW_PIPE_EVENT, 1400)
-
-#Helper func
-def translate(value, leftMin, leftMax, rightMin, rightMax):
-    leftSpan = leftMax - leftMin
-    rightSpan = rightMax - rightMin
-    valueScaled = float(value - leftMin) / float(leftSpan)
-    return rightMin + (valueScaled * rightSpan)
-
-# Game classes
-class Pipe:
-    def __init__(self):
-        self.x = GAME_SCREEN_WIDTH
-        self.y = random.randrange(100, GAME_SCREEN_HEIGHT - 100)
-        self.bottom_color = DARK_GREEN
-        self.top_color = DARK_GREEN
-
-class Bird:
-    def __init__(self, y_start, color, brain_model = None):
-        self.x = GAME_SCREEN_WIDTH // 2
-        self.y = y_start
-        self.y_delta = 0
-        self.color = color
-        self.pipe = None
-        #shape of our brain
-        self.brain = NeuralNetwork(4, 8, 2, parent_weights=brain_model)
-        self.fitness = 0
-    
-    def flap(self):
-        if self.y_delta < 0:
-            self.y_delta = 5
-        if self.y_delta < 15:
-            self.y_delta +=6
-    
-    def will_flap(self):
-        if self.pipe is not None:
-            x_delta, y1_delta, y2_delta = self.look_at_oncoming_pipe()
-            self_delta = translate(self.y_delta, -21, 21, -1, 1)
-            x_delta = translate(x_delta, 0, 388, -1, 1)
-            y1_delta = translate(y1_delta, 0, 470, -1, 1)
-            y2_delta = translate(y2_delta, 0, 470, -1, 1)
-            return(self.brain.predict([x_delta, y1_delta, y2_delta, self_delta]))
-
-    def look_at_oncoming_pipe(self):
-        horizontal_distance_to_pipe = self.pipe.x + (PIPE_WIDTH // 2) - self.x
-        vertical_distance_to_top_pipe = self.y - self.pipe.y
-        vertical_distance_to_bottom_pipe = self.pipe.y + PIPE_GAP - self.y
-        return (horizontal_distance_to_pipe, vertical_distance_to_top_pipe, vertical_distance_to_bottom_pipe)
-
-
 
 class Game():
     def __init__(self, birds):
@@ -189,7 +124,7 @@ class Game():
         bird.y = round(bird.y - (bird.y_delta * self.dt/30))
 
     def kill_bird_that_flies_out_of_bounds(self, bird, bird_idx):
-        if bird.y + 25 > GAME_SCREEN_HEIGHT or bird.y < -100:
+        if bird.y > GAME_SCREEN_HEIGHT + 50 or bird.y < -50:
             del self.birds[bird_idx]
 
     def capture_last_bird_remaining(self, fit_bird):
