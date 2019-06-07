@@ -18,7 +18,7 @@ SKY_BLUE = (135, 206, 235)
 GAME_SCREEN_WIDTH = 700
 GAME_SCREEN_HEIGHT = 500
 BIRD_SIZE = 10
-PIPE_WIDTH = 25
+PIPE_WIDTH = 35
 PIPE_GAP = 100
 BIRD_X = GAME_SCREEN_WIDTH // 2
 GAME_MENU_WIDTH = 300
@@ -222,10 +222,11 @@ class Game():
 
     def draw_pipes(self):
         for pipe in self.pipes:
-            pygame.draw.circle(self.screen, WHITE, [int(pipe.x), int(pipe.y)], 5)
-            pygame.draw.circle(self.screen, WHITE, [int(pipe.x), int(pipe.y + PIPE_GAP)], 5)
             pygame.draw.rect(self.screen, pipe.bottom_color, (pipe.x, 0, PIPE_WIDTH, pipe.y ))
             pygame.draw.rect(self.screen, pipe.top_color, (pipe.x, pipe.y + PIPE_GAP, PIPE_WIDTH, GAME_SCREEN_HEIGHT - pipe.y ))
+            if pipe.bottom_color == ACTIVE_GREEN:
+                pygame.draw.circle(self.screen, BLACK, [int(pipe.x + (PIPE_WIDTH // 2)), int(pipe.y)], 5)
+                pygame.draw.circle(self.screen, BLACK, [int(pipe.x + (PIPE_WIDTH // 2)), int(pipe.y + PIPE_GAP)], 5)
         
         text_rect = self.current_score_text.get_rect()
         text_rect.center = (GAME_SCREEN_WIDTH - FONT_SIZE * 2 , 0 + FONT_SIZE * 2 // 2 )
@@ -281,7 +282,7 @@ class Game():
         self.dt = self.clock.tick(30)
         self.screen.fill(SKY_BLUE)
         self.draw_menu()
-        loading_text = self.main_font.render(f'Spawing Generation {self.current_generation + 1}', False, YELLOW)
+        loading_text = self.main_font.render(f'Spawning Generation {self.current_generation + 1}', False, YELLOW)
         text_rect = loading_text.get_rect()
         text_rect.center = (GAME_SCREEN_WIDTH // 2, GAME_SCREEN_HEIGHT // 2 )
         self.screen.blit(loading_text, text_rect)
