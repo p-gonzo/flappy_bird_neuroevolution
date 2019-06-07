@@ -26,7 +26,7 @@ class NeuralNetwork():
                     recursively_mutate(item)
                 else:
                     if np.random.random() < rate:
-                        obj[item_idx] = item + (np.random.normal() * np.random.uniform(low=0.3, high=0.6))
+                        obj[item_idx] = item + (np.random.normal() * np.random.uniform(low=0.2, high=0.5))
         recursively_mutate(mutated_weights)
         self.model.set_weights(mutated_weights)
             

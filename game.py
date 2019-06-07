@@ -52,7 +52,7 @@ class Bird:
         self.color = color
         self.pipe = None
         #shape of our brain
-        self.brain = NeuralNetwork(3, 8, 2, parent_weights=brain_model)
+        self.brain = NeuralNetwork(4, 8, 2, parent_weights=brain_model)
         self.fitness = 0
     
     def flap(self):
@@ -63,16 +63,18 @@ class Bird:
     
     def will_flap(self):
         if self.pipe is not None:
-            x_delta, y_delta = self.look_at_oncoming_pipe()
+            x_delta, y1_delta, y2_delta = self.look_at_oncoming_pipe()
             self_delta = translate(self.y_delta, -21, 21, -1, 1)
             x_delta = translate(x_delta, 0, 388, -1, 1)
-            y_delta = translate(y_delta, 0, 470, -1, 1)
-            return(self.brain.predict([x_delta, y_delta, self_delta]))
+            y1_delta = translate(y1_delta, 0, 470, -1, 1)
+            y2_delta = translate(y2_delta, 0, 470, -1, 1)
+            return(self.brain.predict([x_delta, y1_delta, y2_delta, self_delta]))
 
     def look_at_oncoming_pipe(self):
-        horizontal_distance_to_pipe = self.pipe.x + PIPE_WIDTH - self.x
-        vertical_distance_to_pipe = self.pipe.y - self.y
-        return (horizontal_distance_to_pipe, vertical_distance_to_pipe)
+        horizontal_distance_to_pipe = self.pipe.x + (PIPE_WIDTH // 2) - self.x
+        vertical_distance_to_top_pipe = self.y - self.pipe.y
+        vertical_distance_to_bottom_pipe = self.pipe.y + PIPE_GAP - self.y
+        return (horizontal_distance_to_pipe, vertical_distance_to_top_pipe, vertical_distance_to_bottom_pipe)
 
 
 
@@ -192,12 +194,13 @@ class Game():
 
     def capture_last_bird_remaining(self, fit_bird):
         fitest_brain_in_current_generation = fit_bird.brain.model.get_weights()
-        if self.fitest_bird_so_far['brain'] is None or fit_bird.fitness > self.fitest_bird_so_far['fitness']:
-            self.fitest_bird_so_far['brain'] = fit_bird.brain.model.get_weights()
-            self.fitest_bird_so_far['fitness'] = fit_bird.fitness
-            self.fitest_bird_so_far['score'] = self.current_score
-            self.fitest_bird_so_far['generation'] = self.current_generation
-            self.fitest_bird_so_far['color'] = fit_bird.color
+        if self.current_score > 0:
+            if self.fitest_bird_so_far['brain'] is None or fit_bird.fitness > self.fitest_bird_so_far['fitness']:
+                self.fitest_bird_so_far['brain'] = fit_bird.brain.model.get_weights()
+                self.fitest_bird_so_far['fitness'] = fit_bird.fitness
+                self.fitest_bird_so_far['score'] = self.current_score
+                self.fitest_bird_so_far['generation'] = self.current_generation
+                self.fitest_bird_so_far['color'] = fit_bird.color
 
     def update_text_values(self):
         self.generation_text = self.main_font.render(f'Generation : {self.current_generation}', False, WHITE)
@@ -219,6 +222,8 @@ class Game():
 
     def draw_pipes(self):
         for pipe in self.pipes:
+            pygame.draw.circle(self.screen, WHITE, [int(pipe.x), int(pipe.y)], 5)
+            pygame.draw.circle(self.screen, WHITE, [int(pipe.x), int(pipe.y + PIPE_GAP)], 5)
             pygame.draw.rect(self.screen, pipe.bottom_color, (pipe.x, 0, PIPE_WIDTH, pipe.y ))
             pygame.draw.rect(self.screen, pipe.top_color, (pipe.x, pipe.y + PIPE_GAP, PIPE_WIDTH, GAME_SCREEN_HEIGHT - pipe.y ))
         
