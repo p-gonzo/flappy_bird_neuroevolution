@@ -133,6 +133,10 @@ class Game():
 
     def capture_last_bird_remaining(self, fit_bird):
         self.fittest_bird_current_gen['brain'] = fit_bird.brain.model.get_weights()
+        # print(fit_bird.brain.model.get_weights())
+        # print(type(fit_bird.brain.model.get_weights()))
+        # for item in fit_bird.brain.model.get_weights():
+        #     print(type(item), item.shape)
         self.fittest_bird_current_gen['fitness'] = fit_bird.fitness
         self.fittest_bird_current_gen['score'] = self.current_score
         self.fittest_bird_current_gen['generation'] = self.current_generation
