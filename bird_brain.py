@@ -6,7 +6,9 @@ from constants import *
 class BirdBrain:
     def __init__(self, parent_blueprint = None):
         if parent_blueprint is not None:
+            # Initialize parent brain structure
             self.copy_brain_blueprint(parent_blueprint)
+            # Mutate parent brain structure
             self.mutate(MUTATION_RATE, MUTATION_VARIANCE_LOW, MUTATION_VARIANCE_HIGH)
         else:
             # Initialize random brain structure
@@ -22,17 +24,21 @@ class BirdBrain:
         self.output_layer_biases = deepcopy(parent_blueprint["output_layer_biases"])
     
     def mutate(self, mutation_rate, variance_low, variance_high):
+        # Mutate Dense layer Weights
         for set_idx, weight_set in enumerate(self.dense_layer_weights):
             for weight_idx, weight in enumerate(weight_set):
                 if np.random.random() < mutation_rate:
                     self.dense_layer_weights[set_idx][weight_idx] += np.random.normal() * np.random.uniform(low=variance_low, high=variance_high)
+        # Mutate Dense layer Biases
         for weight_idx, weight in enumerate(self.dense_layer_biases):
             if np.random.random() < mutation_rate:
                 self.dense_layer_biases[weight_idx] += np.random.normal() * np.random.uniform(low=variance_low, high=variance_high)
+        # Mutate Output layer Weights
         for set_idx, weight_set in enumerate(self.output_layer_weights):
             for weight_idx, weight in enumerate(weight_set):
                 if np.random.random() < mutation_rate:
                     self.output_layer_weights[set_idx][weight_idx] += np.random.normal() * np.random.uniform(low=variance_low, high=variance_high)
+        # Mutate Output layer Biases
         for weight_idx, weight in enumerate(self.output_layer_biases):
             if np.random.random() < mutation_rate:
                 self.output_layer_biases[weight_idx] += np.random.normal() * np.random.uniform(low=variance_low, high=variance_high)
@@ -46,6 +52,7 @@ class BirdBrain:
         }
     
     def predict(self, input_layer):
+        # Linear Algebra calculations to execute neural network
         input_layer = np.array(input_layer)
         dense_layer = input_layer.dot(self.dense_layer_weights) + self.dense_layer_biases
         # ReLU activation

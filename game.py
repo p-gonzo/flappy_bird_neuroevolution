@@ -242,7 +242,7 @@ class Game():
 
     def create_new_generation(self):
         # tf.keras.backend.clear_session()
-        for i in range(20):
+        for i in range(BIRDS_PER_GENERATION):
             new_bird = Bird(
                 GAME_SCREEN_HEIGHT // 2,
                 (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255)),
@@ -261,7 +261,7 @@ if __name__ == "__main__":
             GAME_SCREEN_HEIGHT // 2,
             (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
         ) 
-        for i in range(20)
+        for i in range(BIRDS_PER_GENERATION)
     ]
     game = Game(birds)
     game.run()
