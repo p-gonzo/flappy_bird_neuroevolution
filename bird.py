@@ -1,5 +1,6 @@
 from bird_brain import BirdBrain
 from constants import *
+import random
 
 # Helper function to map values before input into the NeuralNet
 def transpose(value, leftMin, leftMax, rightMin, rightMax):
@@ -10,7 +11,7 @@ def transpose(value, leftMin, leftMax, rightMin, rightMax):
 
 class Bird:
     def __init__(self, y_start, color, brain_model = None):
-        self.x = GAME_SCREEN_WIDTH // 2
+        self.x = GAME_SCREEN_WIDTH // 2 + random.randrange(-BIRD_X_VARIANCE, BIRD_X_VARIANCE)
         self.y = y_start
         self.y_delta = 0
         self.color = color
