@@ -3,7 +3,7 @@ from copy import deepcopy
 
 import pygame
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 
 from bird import Bird
 from pipe import Pipe
@@ -132,7 +132,7 @@ class Game():
             del self.birds[bird_idx]
 
     def capture_last_bird_remaining(self, fit_bird):
-        self.fittest_bird_current_gen['brain'] = fit_bird.brain.model.get_weights()
+        self.fittest_bird_current_gen['brain'] = fit_bird.brain.get_blueprint()
         # print(fit_bird.brain.model.get_weights())
         # print(type(fit_bird.brain.model.get_weights()))
         # for item in fit_bird.brain.model.get_weights():
@@ -241,7 +241,7 @@ class Game():
         self.current_generation += 1
 
     def create_new_generation(self):
-        tf.keras.backend.clear_session()
+        # tf.keras.backend.clear_session()
         for i in range(20):
             new_bird = Bird(
                 GAME_SCREEN_HEIGHT // 2,

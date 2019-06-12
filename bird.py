@@ -1,4 +1,4 @@
-from nn import NeuralNetwork
+from bird_brain import BirdBrain
 from constants import *
 
 # Helper function to map values before input into the NeuralNet
@@ -16,7 +16,7 @@ class Bird:
         self.color = color
         self.pipe = None
         #shape of our brain is 4 inputs, 1 hidden layer w/ 8 nodes, 2 outputs
-        self.brain = NeuralNetwork(4, 8, 2, parent_weights=brain_model)
+        self.brain = BirdBrain(parent_blueprint=brain_model)
         self.fitness = 0
     
     def flap(self):
