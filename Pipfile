@@ -7,8 +7,6 @@ verify_ssl = true
 
 [packages]
 pygame = "*"
-pyuserinput = "*"
-tensorflow = "*"
 numpy = "*"
 
 [requires]
