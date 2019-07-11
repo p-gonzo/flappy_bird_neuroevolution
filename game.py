@@ -218,6 +218,11 @@ class Game():
             fittest_bird_text_6 = self.fittest_bird_text_6.get_rect()
             fittest_bird_text_6.center = (((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2) - 33, 88 + FONT_SIZE + 10 + 100 )
             self.screen.blit(self.fittest_bird_text_6, fittest_bird_text_6)
+
+            self.birds_left_text = MAIN_FONT.render(f"Birds Left: {len(self.birds)}", False, ACTIVE_GREEN)
+            birds_left_text = self.birds_left_text.get_rect()
+            birds_left_text.center = ((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2, GAME_SCREEN_HEIGHT - FONT_SIZE // 2 )
+            self.screen.blit(self.birds_left_text, birds_left_text)
     
     def display_loading_screen(self):
         self.dt = self.clock.tick(30)
