@@ -20,7 +20,7 @@ LARGE_FONT = pygame.font.Font(None, FONT_SIZE * 2)
 class Game():
     def __init__(self, birds):
         pygame.event.post(pygame.event.Event(NEW_PIPE_EVENT))
-        pygame.time.set_timer(NEW_PIPE_EVENT, 1400) #
+        pygame.time.set_timer(NEW_PIPE_EVENT, 1400)
 
         self.done = False
         self.created_new_generation = False
@@ -46,6 +46,13 @@ class Game():
             'color': None,
             'score': 0
         }
+        self.fittest_bird_previous_gen = {
+            'brain': None,
+            'fitness': 0,
+            'generation': 0,
+            'color': None,
+            'score': 0
+        }
         self.update_menu_text_values()
 
     def run(self):
@@ -58,8 +65,13 @@ class Game():
             self.draw_everything()
             
             if len(self.birds) == 1:
-                self.capture_last_bird_remaining(self.birds[0])
+                self.capture_last_bird_remaining()
             if len(self.birds) == 0:
+                self.fittest_bird_previous_gen = deepcopy(self.fittest_bird_current_gen)
+                if self.current_score > 0:
+                    if self.fittest_bird_so_far['brain'] is None or self.fittest_bird_previous_gen['fitness'] > self.fittest_bird_so_far['fitness']:
+                        self.fittest_bird_so_far = deepcopy(self.fittest_bird_previous_gen)
+                self.current_generation += 1
                 self.display_loading_screen()
                 self.create_new_generation()
             
@@ -131,19 +143,12 @@ class Game():
         if bird.y > GAME_SCREEN_HEIGHT + 50 or bird.y < -50:
             del self.birds[bird_idx]
 
-    def capture_last_bird_remaining(self, fit_bird):
-        self.fittest_bird_current_gen['brain'] = fit_bird.brain.get_blueprint()
-        # print(fit_bird.brain.model.get_weights())
-        # print(type(fit_bird.brain.model.get_weights()))
-        # for item in fit_bird.brain.model.get_weights():
-        #     print(type(item), item.shape)
-        self.fittest_bird_current_gen['fitness'] = fit_bird.fitness
+    def capture_last_bird_remaining(self):
+        self.fittest_bird_current_gen['brain'] = self.birds[0].brain.get_blueprint()
+        self.fittest_bird_current_gen['fitness'] = self.birds[0].fitness
         self.fittest_bird_current_gen['score'] = self.current_score
         self.fittest_bird_current_gen['generation'] = self.current_generation
-        self.fittest_bird_current_gen['color'] = fit_bird.color
-        if self.current_score > 0:
-            if self.fittest_bird_so_far['brain'] is None or fit_bird.fitness > self.fittest_bird_so_far['fitness']:
-                self.fittest_bird_so_far = deepcopy(self.fittest_bird_current_gen)
+        self.fittest_bird_current_gen['color'] = self.birds[0].color
 
     def update_menu_text_values(self):
 
@@ -154,8 +159,8 @@ class Game():
         self.fittest_bird_text_3 = MAIN_FONT.render(f"Gen: {self.fittest_bird_so_far['generation']}", False, WHITE)
 
         self.fittest_bird_text_4 = MAIN_FONT.render(f'Fittest in Prev Gen:', False, WHITE)
-        self.fittest_bird_text_5 = MAIN_FONT.render(f"Score: {self.fittest_bird_current_gen['score']}", False, YELLOW)
-        self.fittest_bird_text_6 = MAIN_FONT.render(f"Gen: {self.fittest_bird_current_gen['generation']}", False, WHITE)
+        self.fittest_bird_text_5 = MAIN_FONT.render(f"Score: {self.fittest_bird_previous_gen['score']}", False, YELLOW)
+        self.fittest_bird_text_6 = MAIN_FONT.render(f"Gen: {self.fittest_bird_previous_gen['generation']}", False, WHITE)
 
     def draw_everything(self):
         self.screen.fill(SKY_BLUE)
@@ -204,7 +209,7 @@ class Game():
             fittest_bird_text_4 = self.fittest_bird_text_4.get_rect()
             fittest_bird_text_4.center = ((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2, 50 + FONT_SIZE // 2 + 100 )
             self.screen.blit(self.fittest_bird_text_4, fittest_bird_text_4)
-            pygame.draw.circle(self.screen, self.fittest_bird_current_gen['color'], [GAME_SCREEN_WIDTH + 50, 118 + 100], BIRD_SIZE)
+            pygame.draw.circle(self.screen, self.fittest_bird_previous_gen['color'], [GAME_SCREEN_WIDTH + 50, 118 + 100], BIRD_SIZE)
 
             fittest_bird_text_5 = self.fittest_bird_text_5.get_rect()
             fittest_bird_text_5.center = (((GAME_SCREEN_WIDTH + SCREEN_WIDTH) // 2) - 25, 88 + FONT_SIZE // 2 + 100 )
@@ -238,23 +243,21 @@ class Game():
         self.pipes = []
         self.closest_pipe_to_bird = None
         self.current_score = 0
-        self.current_generation += 1
 
     def create_new_generation(self):
-        # tf.keras.backend.clear_session()
         for i in range(BIRDS_PER_GENERATION):
             new_bird = Bird(
                 GAME_SCREEN_HEIGHT // 2,
                 (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255)),
                 # Half of new birds are mutated from the fittest bird ever
                 # Other half are mutated from the fittest bird in last generation
-                brain_model= self.fittest_bird_so_far['brain'] if i % 2 == 0 else self.fittest_bird_current_gen['brain']
+                brain_model= self.fittest_bird_so_far['brain'] if i % 2 == 0 else self.fittest_bird_previous_gen['brain']
             )
             self.birds.append(new_bird)
         self.created_new_generation = True
 
 
- 
+
 if __name__ == "__main__":
     birds = [
         Bird(
